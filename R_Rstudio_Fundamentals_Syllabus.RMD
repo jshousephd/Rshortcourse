@@ -1,0 +1,99 @@
+---
+title: "Fundamentals of R and Posit (R Studio)"
+author: "John S. House PhD - NCSU & NIEHS"
+date: "March 30, 2024"
+output:
+  slidy_presentation:
+    font_adjustment: -1
+    footer: "Fundamentals of R and Posit (R Studio) – A One Day Short Course"
+---
+
+## Fundamentals of R and Posit (R Studio)
+
+### Contact Information
+
+<font size="5">- John S. House PhD</font>
+
+<font size="4">- [jshouse\@ncsu.edu](mailto:jshouse@ncsu.edu){.email}</font>
+
+### About Me
+
+<font size="4">- [NIEHS Biostatistics and Computational Biology](https://www.niehs.nih.gov/research/atniehs/labs/bb/staff/house/index.cfm)</font>
+
+<font size="4">- [Google Scholar](https://scholar.google.com/citations?user=F1OfztcAAAAJ&hl=en)</font>
+
+## BEFORE WE MEET - PLEASE INSTALL R AND RSTUDIO USING THE FOLLOWING GUIDE
+
+-   <https://rstudio-education.github.io/hopr/starting.html>
+-   Install R following directions from here: <https://cran.r-project.org/>
+-   Install Rstudio (Posit) following directions from here: <https://posit.co/downloads/>
+
+### This course requires a computer
+
+-   This course teaches R in the context of the Interactive Development Environment called Posit (Rstudio)
+
+-   You will need a computer (**not a chromebook**) that runs one of the following Operating Systems
+
+    -   Linux: Unix of some sort
+    -   Mac: Unix-based
+    -   Windows
+
+## Agenda and Learning Objectives 
+
+-   8:00-8:30     **Arrival**
+
+-   8:30-9:30     **R and Rstudio overview, navigation and setup**
+    -   Opening and closing scripts 
+    -   Help documentation access 
+    -   The working directory and relative paths 
+    -   Assignment operator and object browser 
+    -   Rstudio Script Types – this course will focus on R markdown 
+        -   .R vs .RMD and knitting to HTML output 
+
+-   9:30-10:00    **Getting data in and out of R**
+    -   Base R functions for delimited files
+    -   data.table package and fread()
+    -   Excel files from readxl package
+    
+-   10:00-10:15   **Short break**
+
+-   10:15-11:00   **Working with vectors**
+    -   Vector Creation and Types of Vectors (character, numerical, logical) using c()
+    -   Vector Operations (sum(), mean(), length(), min(), max())
+    -   Logical Operations
+    -   Indexing and Subsetting
+    
+-   11:00-12:00   **Working with data frames**
+    -   Creation of data.frames()
+    -   Inspection with head(), tail(), dim(), str(), nrow(), ncol()
+    -   The $ notation
+    -   Adding columns and rows with rbind() and cbind()
+    -   Column calculations
+    
+-   12:00-12:45   **Lunch break**
+
+-   12:45-1:45    **Data munging with dplyr**
+    -   Filtering Rows and Columns with filter() and select()
+    -   Creation of new variables with mutate()
+    -   Summarizing data with summarise()
+    -   Sorting and grouping operations with arrange() and group_by()
+    
+-   1:45-2:30     **Merging data in R with dplyr**
+    -   Left, right, full, inner joins
+    
+-   2:30-3:00     **Data visualization I**
+    -   Graphics in Base R
+    -   GGPlot2 Graphics
+    
+-   3:00-3:15     **Short break**
+
+-   3:15-4:15     **Data visualization II**
+    -   Theme elements and graphics layout 
+
+-   4:15-5:00     **Intro to functional programming**
+    -   Parameters 
+    -   Default Values
+    -   Loops 
+
+
+
