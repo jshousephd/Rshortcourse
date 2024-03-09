@@ -17,3 +17,5 @@ Agenda
 -  1:45 PM 2:30 PM Merging data in R with dplyr
 -  2:30 PM 3:00 PM Data visualization I
 -  3:00 PM 3:15 PM Short Break
+-  3:15 PM 4:15 PM Data visualization II
+-  4:15 PM 5:00 PM Intro to functional programming
