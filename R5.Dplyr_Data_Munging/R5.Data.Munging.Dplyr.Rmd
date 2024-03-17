@@ -1,0 +1,494 @@
+---
+title: "Data Munging with Dplyr"
+author: "John House PhD"
+date: "March 30th 2024"
+output:
+  slidy_presentation:
+    df_print: 
+    font_adjustment: -2
+    footer: "Fundamentals of R and Posit (R Studio) - Data Munging"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+# install.packages("dplyr")
+# install.packages("kableExtra")
+library(kableExtra)
+library(dplyr)
+```
+
+## Tidyverse Collection 
+
+-   Technically, tidyverse is a collection of more than a dozen packages, all with different features
+-   Most of the functions we are working with today come from the package: `dplyr`
+
+
+## We will use the GWAS catalog data 
+
+- The GWAS catalog is maintained by NHGRI-EBI and downloaded at different levels from https://www.ebi.ac.uk/gwas/docs/file-downloads 
+- Contains every peer-reviewed published Variant for associations of genetic variation in humans (SNPS or indels) with studied traits at a pvalue <= 0.00001
+- Since pvalues can get very very small, they are usually shown on the -log10 scale where -log10(.00001) = 5 and thus larger values of -log10(pvalue) are more significant
+- The Name description of the file can be found https://www.ebi.ac.uk/gwas/docs/fileheaders#_file_headers_for_catalog_version_1_0_1 
+- If needed, install the data.table package with `install.packages("data.table")`
+
+### Important: Download file here into same directory as this .RMD file
+
+https://drive.google.com/file/d/1y50_LJy0yd-J-nyQFTGTqgPvlgLoexha/view?usp=sharing 
+
+```{r}
+# install.packages("data.table")
+# library(data.table)
+# gwas <- fread("gwas_catalog_v1.0.2-associations_e110_r2023-09-10.tsv")
+# save(gwas,file =  "gwas.RData")
+load(file = "gwas.RData")
+```
+
+## Get some basic understand of the dataset we just loaded 
+
+### What are the dimensions of our data?
+```{r}
+## What are the dimensions of our data?
+dim(gwas)
+```
+
+### Class of our data object in R?
+
+```{r}
+## Class of our data object in R?
+class(gwas)
+```
+
+### What are the Column Names 
+
+```{r}
+## What are the column Names 
+names(gwas)
+```
+
+## Get some basic understand of the dataset we just loaded 
+
+### What do the first 3 Rows of data look like
+
+
+```{r}
+## What do the first 3 Rows of data look like
+head(gwas, n = 3)
+```
+
+## Interrogating Column Values 
+
+### How many manuscripts are in the catalog 
+
+#### Using Base::R syntax
+
+```{r}
+## How many manuscripts are in the catalog 
+## Using Base::R syntax
+length(unique(gwas$PUBMEDID))
+```
+
+### We could also use tidyverse syntax and functions 
+
+#### The pull() function creates a vector from a specified column of a data.frame 
+
+
+```{r}
+## We could also use tidyverse syntax and functions
+## the pull() function creates a vector from a specified column of a data.frame 
+gwas %>% 
+  pull(PUBMEDID) %>% # pull out a vector from a specified column 
+  length() ## count how many elements in the vector 
+```
+
+### What about the number of unique publications
+
+```{r}
+gwas %>% 
+  pull(PUBMEDID) %>% ## pull out a vector from a specified column 
+  unique() %>% ## discard duplicate entries from the vector 
+  length() ## count how many elements in the vector 
+```
+
+## Interrogating Column Values 
+
+### How about the number of Mapped Traits in the catalog?
+
+```{r}
+gwas %>% pull(MAPPED_TRAIT) %>% unique() %>% length()
+## What are the first 6 unique mapped traits?
+gwas %>% 
+  pull(MAPPED_TRAIT) %>% ## pull out a vector from a specified column 
+  unique() %>% ## discard duplicate entries from the vector 
+  head() ## show the first 6 values 
+```
+
+### What is the smallest pvalue in catalog
+
+```{r}
+gwas %>% 
+  pull(`P-VALUE`) %>% ## pull out a vector from a specified column 
+  min() ## assess the smallest value that exists in the vector 
+```
+
+### What do you thing is going on? We know there were smaller pvalues than 10e-10
+
+## How about we look in stead at the minus log10(pvalue) instead?
+
+
+
+```{r}
+
+gwas %>% 
+  pull(`PVALUE_MLOG`) %>% ## pull out a vector from a specified column 
+  summary() ## print some statistcs regarding this vector
+```
+### Looks like at least one pvalue isn't coded correctly! 
+#### Why?  Because this data set should only include pvalues at 0.00001 and smaller 
+```{r}
+
+pvalues <- c(0.1, 0.01, 0.001, 0.0001, 0.00001, 1e-6, 1e-7, 1e-8, 1e-9)
+mlog10P <- -log10(pvalues)
+
+cbind(pvalues, mlog10P)
+
+```
+#### This means that the value 5 should be the smallest value for -log10(pvalue)
+
+## Basic dplyr Functions
+
+-   filter(): Used to subset rows based on conditions
+-   slice(): Used to choose rows by position 
+-   select(): Used to choose specific columns
+-   mutate(): Used to create new variables
+-   arrange(): Used to reorder rows
+-   summarize(): Used for summary statistics -group_by(): Used to for doing summary statistics by group
+    - https://dplyr.tidyverse.org/reference/summarise.html 
+    - Can be used in concert with `group_by` for grouped summarizations 
+
+## dplyr::filter()
+-   filter() selects rows based on parsing a column! 
+
+### How many rows are less than 5 
+```{r}
+## What was that row of data associated with the incorrectly coded -log10Pvalue??
+gwas %>% 
+  dplyr::filter(PVALUE_MLOG < 5) ## filter for records where -log10(pvalue) < 5
+
+```
+
+#### it was just a single record so lets remove it
+```{r}
+gwas_qc <- gwas %>% 
+  dplyr::filter(PVALUE_MLOG >= 5)
+nrow(gwas) ## records in original dataset
+nrow(gwas_qc) ## records in our cleaned dataset (qc = quality control)
+```
+
+## Continued: dplyr::filter() 
+-   We can filter on more than 1 criteria at a time 
+-   Either in the same column or in different columns 
+
+### How many records in the catalog for the `breast carcinoma` trait on chromosome 5? 
+
+#### Logically, multiple conditions separated by commas are treated as "AND" 
+
+```{r}
+gwas_qc %>% 
+  dplyr::filter(MAPPED_TRAIT == "breast carcinoma", CHR_ID == "5") %>% ## notice the double equal sign 
+  nrow() ## how many rows left in our catalog after filtering
+```
+
+### What are the unique genes from those 197 records? 
+
+```{r}
+
+gwas_qc %>% 
+  dplyr::filter(MAPPED_TRAIT == "breast carcinoma", CHR_ID == "5") %>% ## filter all records where gene is FGF10 AND the trait is Breast Cancer
+  pull(MAPPED_GENE) %>% ## Pull vector of associated genes
+  unique()
+
+```
+
+## Continued: dplyr::filter() 
+
+-   We saw that genetic varation near the gene **`FGF10`** was associated with breast carcinoma 
+-   Has that genetic variation near **`FGF10`** been associated with any other traits besides breast carcinoma? 
+ 
+```{r}
+gwas_qc %>% 
+  dplyr::filter(MAPPED_GENE == "FGF10") %>% ## filter all records where gene is FGF10
+  pull(MAPPED_TRAIT) %>% ## after filtering, pull the vector of mapped traits 
+  unique() ## give me the unique values
+```
+
+### How many actual variants have been associated with **`FGF10`**?
+
+```{r}
+
+gwas_qc %>% 
+  dplyr::filter(MAPPED_GENE == "FGF10") %>% ## filter all records where gene is FGF10
+  pull(SNPS) %>% ## after filtering, pull the vector of SNPS
+  unique() ## give me the unique values
+
+```
+
+## dplyr::slice - choosing rows by position 
+-   slice_min() 
+-   slice_head() 
+-   slice_tail()
+-   slice_max() 
+
+### For brevity, we'll subset the dataset using [ row, column] base functions first to only show the last 11 columns 
+
+### slice_head() gives us similar information as `head()`
+
+```{r}
+## using ncol() to count number of columns of our dataset 
+ncol(gwas_qc) ## the last column of our dataset = column 38 
+ncol(gwas_qc) - 10 ## the value of 10 columns prior to last is 28 
+
+## construct vector for 28 through 38 
+(ncol(gwas_qc)-10):ncol(gwas_qc)
+
+mycolumns <- (ncol(gwas_qc)-10):ncol(gwas_qc)
+
+gwas_qc[, mycolumns] %>% slice_head(n = 2)
+```
+
+### slice_tail() gives us similar information as `tail()`
+
+```{r}
+gwas_qc[, mycolumns] %>% slice_tail(n = 2)
+```
+
+### slice_max() allows us to take a slice based on the largest and smallest values of a numerical/integer column
+
+```{r}
+gwas_qc[, mycolumns] %>% slice_max(`PVALUE_MLOG`, n=5)
+```
+
+## dplyr::select() 
+-   Its a pain to keep having all the columns when we may only be interested in a few! 
+-   select() chooses columns 
+    - Can be done with integers - as in select the first column with a 1 
+    - Can be done with column names 
+-   We can also **`RENAME`** columns while selecting!
+-   We can also **`REORDER`** columns while selecting!
+    
+
+### Select first 3 columns of our catalog
+    
+```{r}
+gwas_qc %>% 
+  dplyr::select(1,2,3) %>% 
+  head()
+```
+
+## dplyr::select(): continued 
+
+### Select columns by name and rename some of them! 
+
+```{r}
+gwas_qc %>% 
+  dplyr::select(Catalog_Date = "DATE ADDED TO CATALOG", ## renaming to "Date"
+                Trait = MAPPED_TRAIT, # Trait (a renaming of "MAPPED_TRAIT")
+                SNPS, ## 3 column to be selected is SNPS, but not renaming it
+                Nearest_Gene = MAPPED_GENE, ## renaming to "Nearest_Gene"
+                PVALUE_MLOG) %>% ## last column is the same name and -log10(pvalue) column
+  slice_max(PVALUE_MLOG, n = 10) ## take the records (rows) with the 10 largest values of -log10(pvalue)
+```
+
+## dplyr::select(): continued 
+
+### Put it all together - filter, take top 10 smallest pvalues, and display columns of interest by name
+
+```{r}
+gwas_qc %>% 
+  dplyr::filter(MAPPED_TRAIT == "breast carcinoma") %>%  ## select only the rows for breast cancer 
+  slice_max(`PVALUE_MLOG`, n=10) %>% ## take the 10 largest values of -log10(pvalue)
+  dplyr::select(Trait = MAPPED_TRAIT, ## select our columns of interest
+                CHR = CHR_ID,
+                POS = CHR_POS, 
+                SNPS, 
+                PVALUE_MLOG, 
+                `OR or BETA`, 
+                PUBMEDID) -> mytabledata
+  kbl(mytabledata, caption = "The 10 Most Significant Breast Carcinoma GWAS Catalog Entries") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F)
+
+```
+
+## arrange(): Used to reorder rows 
+-   Same as a sort 
+-   Choose column(s) to sort 
+-   More than one column means sort by first column, then in the other one 
+
+### Arrange by Chromosome!
+```{r}
+mytabledata %>% 
+  arrange(CHR) %>% ## Arrange by Chromosome!
+  kbl(caption = "The 10 Most Significant Breast Carcinoma Catalog Entries") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F)
+```
+
+## arrange(): continued
+
+### Arrange by Chromosome and then Largest -10log(pvalue) next 
+
+#### arrange(CHR) would sort by smallest to largest 
+
+#### arrange(desc(CHR)) would sort by largest to smallest 
+
+```{r}
+# This time arrange by Chromosome and THEN Position 
+mytabledata %>% 
+  arrange(CHR, desc(PVALUE_MLOG)) %>% ## Arrange by Chromosome and then by largest to smallest **PVALUE_MLOG**
+  kbl(caption = "The 10 Most Significant Breast Carcinoma Catalog Entries") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F)
+```
+
+## dplyr::mutate() - New variable creation
+
+### We can use same variable name and overwrite a new definition based on either its values or other columns
+
+```{r}
+mytabledata %>% 
+  head()
+
+mytabledata %>% 
+  mutate(PVALUE_MLOG = round(PVALUE_MLOG,0),
+         POS = as.numeric(POS),
+         CHR = as.numeric(CHR)) %>% 
+  head()
+
+```
+
+## dplyr::mutate(): continued
+
+### We can use to create new variables 
+
+```{r}
+
+mytabledata %>% 
+  mutate(Is_CHR16 = ifelse(CHR == "16", "Yes", "No")) %>%  ## new variable
+  dplyr::select(Trait, Is_CHR16, everything()) %>%  ## Note the helper function `everthing()`
+  head()
+```
+
+
+## dplyr::summarize() - getting summary information from a dataset 
+
+-   https://dplyr.tidyverse.org/reference/summarise.html 
+    - Center: mean(), median()
+    - Spread: sd(), IQR(), mad()
+    - Range: min(), max(),
+    - Position: first(), last(), nth(),
+    - Count: n(), n_distinct()
+    - Logical: any(), all()
+
+-   Can be used in concert with group_by for grouped summarizations
+
+
+
+```{r}
+gwas_qc %>% summarise(Number_entries = n(),
+                      Number_Distinct_Journals = n_distinct(JOURNAL),
+                      Mean_PVALUE_MLOG = mean(PVALUE_MLOG),
+                      Avg_upstream_gene_distance = mean(UPSTREAM_GENE_DISTANCE, na.rm = T))
+
+```
+
+## dplyr::summarize(): continued
+
+-   Can be used in concert with group_by() for grouped summarizations
+
+```{r}
+gwas_qc %>% 
+  dplyr::filter(grepl(pattern = "cancer", ignore.case = T, x = MAPPED_TRAIT)) %>%  ## Filter to only records with Mapped Trait containing the word "cancer"
+  group_by(MAPPED_TRAIT) %>% ## Perform this operations by group for all records within each MAPPED_TRAIT
+  
+  summarise(Number_entries = n(),
+            Number_Distinct_Journals = n_distinct(JOURNAL),
+            Mean_PVALUE_MLOG = mean(PVALUE_MLOG)) %>% 
+  slice_head(n = 10)
+```
+
+## Putting it all together 
+- For Traits with cancer 
+- Graph the distribution of variants found for each chromosome 
+
+```{r}
+gwas_qc %>% 
+  dplyr::filter(grepl(pattern = "cancer", ignore.case = T, x = MAPPED_TRAIT), ## Filter to records with Mapped Trait containing the word "cancer"
+                PVALUE_MLOG > 7.30103) %>%  ## only look at records at genome wide significance of -log10(5e-8) or larger
+  ### There are messed up values for CHR in the database - creating numeric version gets rid of many!
+  mutate(CHR = as.numeric(CHR_ID)) %>%  ## Create a numeric version of the character variable for chromosome
+  group_by(CHR) %>% ## group by chromosome 
+  dplyr::filter(CHR %in% 1:22) %>% ## Only look at non-sex related chromosomes
+  summarize(Catalog_Entries = n(),
+            Unique_Variants = n_distinct(SNPS),
+            Unique_Genes = n_distinct(MAPPED_GENE),
+            Publications = n_distinct(PUBMEDID)) -> Cancer_GWAS_Summary
+Cancer_GWAS_Summary %>% 
+  kbl(caption = "GWAS Catalog Summary of Cancer Variants by Chromosome") %>%
+  kable_classic_2(full_width = F)
+
+```
+
+## And a plot!
+```{r}
+library(ggplot2)
+
+Cancer_GWAS_Summary %>% 
+  ggplot(aes(x = CHR, y = Unique_Variants)) +
+  geom_bar(stat = "identity", color = "slateblue", fill = "slateblue") +
+  scale_x_continuous(breaks = 1:22) +
+  xlab("Human Autosome") +
+  ylab("Unique Associations with Cancer Traits") +
+  ggtitle("Unique Variants by Chromosome for Cancer-Related Phentoypes\nin the GWAS Catalog as of September 24, 2023")+
+  geom_text(aes(label=Unique_Variants), position=position_dodge(width=0.9), vjust=-0.25) +
+  theme_classic()
+  
+```
+
+
+## Excercises !
+
+## Assignment 4 Q1
+
+### How many different **Unique** Mapped Traits have been found on each Chromosome?
+-   Note: this is independent of cancer related traits
+-   Print a table to the screen by chromosome of this information 
+
+```{r}
+load("gwas.RData")
+names(gwas)
+
+```
+
+## Assignment Q2
+
+### Create a Bar Chart of those values by Chromosome 
+
+```{r}
+
+```
+
+## Assignment Q3
+
+### What 5 Mapped_Trait contains the most unique SNPS associated with them in the gwas catalog
+
+```{r}
+
+```
+
+## Assignment Q4 
+
+### What MAPPED_GENE has the most **unique** gwas MAPPED_TRAITS associated with it?
+- Print those unique traits to the screen along with the number of unique variants for each trait as a table 
+
+```{r}
+
+```
+
+
