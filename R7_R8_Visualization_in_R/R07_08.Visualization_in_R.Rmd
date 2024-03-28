@@ -1,0 +1,777 @@
+---
+title: "Visualization in R - Grahics"
+author: "John House PhD"
+date: "March 30th 2024"
+output:
+  slidy_presentation:
+    font_adjustment: -1
+    footer: "R Workshop - Graphics!"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+library(tidyverse)
+library(kableExtra)
+```
+
+## Visualization in R - Graphics with base R functions and with GGPLOT2
+
+### Learning Outcomes
+
+-   Learn Basic Plots using ggplot2 package
+-   Understand ggplot2's syntax for building up a plot from a blank canvas
+    -   Aesthetics
+    -   Geometries
+
+## Tidyverse and ggplot2
+
+-   ggplot2 is part of the tidyverse
+
+    -   it gets loaded with library(tidyverse)
+    -   or you can load it with just library(ggplot2)
+
+-   Resource - grammar of graphics in ggplot2 (<https://r4ds.hadley.nz/layers>)
+
+-   **Aesthetics of graphics objects**
+
+    -   What variables on represented by X or Y axes?
+    -   What variables are represented by a color?
+    -   What variable is represented by the size?
+    -   What variable is represented by the shape of the point?
+
+-   **Geometry of the graphics object**
+
+    
+##  We'll use the built-in airquality dataset to illustrate
+
+    -   ?airquality for information 
+    -   Daily air quality measurements in New York, May to September 1973 
+
+```{r}
+airquality %>% head %>% 
+  kbl(caption = "First 6 records of the airquality Dataset in R") %>%
+  kable_classic_2(full_width = F)
+
+print("Structure of the airquality dataset in R")
+str(airquality)
+```
+
+## Graphics! - Scatterplots
+
+### Used to examine the relationship between two (usually numeric) variables
+
+```{r}
+airquality %>% 
+  ggplot( ., aes(x = Ozone, y = Temp)) + ## Set up the aesthetics
+  geom_point(color = "slateblue4", size = 4, alpha = .3) + ## Specify a point plot
+  ggtitle("Relationship between O3 and Temperature") + ## Add in descriptive title for our graph 
+  xlab("Ozone (PPM)") + ## Add in descriptive label for our axis
+  ylab("Temperature(F)") ## Add in descriptive label for our axis
+```
+
+### Things to notice
+-   we used the pipe into ggplot() and explicitly told ggplot2 that the data to use was what was passed by the pipe
+    -    we did this with the period  (.) 
+-   ggplot2() has its own kind of pipe, it uses the `+` after each line to specify another layering is coming
+-   aes() was used to define the underlying structure of the plot 
+-   we then layered on what ggplot2 refers to as a "geometry" -> in this case **geom_point** 
+-   we specifed the size and the translucence of the points with the **size** and **alpha** parameters 
+-   The warning -> refers to where one of the values on the dataset was missing for either the x or y or both 
+
+## Base R Scatterplot using plot()
+
+```{r}
+plot(x = airquality$Ozone, 
+     y = airquality$Temp,
+     col = alpha("slateblue4", 0.4),
+     pch = 16,
+     main = "Relationship between O3 and Temperature",
+     xlab = "Ozone (PPM)",
+     ylab = "Temperature(F)")
+```
+
+## Back to GGPLOT2 - Scatterplot - Color by Month 
+
+```{r}
+airquality %>% 
+  mutate(Month = as.factor(Month)) %>% ## Change Month to a Categorical variable 
+  ggplot( ., aes(x = Ozone, y = Temp, color = Month)) + ## addin color aesthetic 
+  geom_point(size = 4, alpha = .4) +  ## these are actually additional aesthetics added to the geom_point() layer
+    ggtitle(label = "Relationship between O3 and Temperature", ## Add Title
+            subtitle = "Colored by Month of the Year") + ## Add subtitle
+  xlab("Ozone (PPM)") + ## Change X axis label 
+  ylab("Temperature(F)") +  ## Change Y axis label
+  theme_classic() ## use different theme to change plot appearance 
+```
+
+## Scatterplot - Symbol by month (shape)
+
+```{r}
+airquality %>% 
+  mutate(Month = as.factor(Month)) %>% ## Change Month to a Categorical variable 
+  ggplot( ., aes(x = Ozone, y = Temp, shape = Month)) +
+  geom_point(size = 4, alpha = .4) +
+    ggtitle(label = "Relationship between O3 and Temperature", 
+            subtitle = "Shapes indicate Month") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic() ## use different theme to change plot appearance 
+```
+
+## Scatterplot - Size by Solar Radiation
+
+```{r}
+
+airquality %>% 
+  mutate(Month = as.factor(Month)) %>% ## Change Month to a Categorical variable 
+  ggplot( ., aes(x = Ozone, y = Temp, size = Solar.R, color = Month)) +
+  geom_point(alpha = .4) +
+    ggtitle(label = "Relationship between O3 and Temperature", 
+            subtitle = "Colored by Month of the Year") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic() ## use different theme to change plot appearance 
+```
+
+### These were all changing of aesthetics for the same geometry - geom_point() which prints a scatterplot
+
+## Adding lines through X,Y numerical data with the **geom_smooth()** geometry 
+
+### geom_smooth() is a geometry used for drawing lines through the data 
+
+
+```{r}
+airquality %>% 
+  ggplot( ., aes(x = Ozone, y = Temp)) +
+  geom_smooth() +
+  ggtitle(label = "Relationship between O3 and Temperature") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic() ## use different theme to change plot appearance 
+
+```
+
+### Notice that we don't have the points, just a line through the points
+
+## Layering geometries
+-   geom_point() to add points
+-   geom_smooth() to add the fit through the points 
+
+```{r}
+airquality %>% 
+  # mutate(Month = as.factor(Month)) %>% ## Change Month to a Categorical variable 
+  ggplot( ., aes(x = Ozone, y = Temp)) +
+  geom_point(size = 4, alpha = .4, color = "purple") +
+  geom_smooth(alpha = .25) + ## lighten the shading of the standard error shading
+  ggtitle(label = "Relationship between O3 and Temperature") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic() ## use different theme to change plot appearance 
+
+```
+
+## Doing the smoothing by month
+
+-   Smooth
+-   Overlay the points on top
+
+```{r}
+airquality %>% 
+  ggplot( ., aes(x = Ozone, y = Temp, color = as.factor(Month))) +
+  geom_smooth() +
+  geom_point()
+```
+
+-   This one has default settings 
+    -   loess fit not linear
+    -   no real formatting 
+    -   missing title and labels 
+
+
+## Doing the smoothing by month and using a linear fit!
+
+-   Smooth with linear fit
+-   Overlay the points on top 
+
+```{r}
+airquality %>% 
+  mutate(Month = as.factor(Month)) %>% ## Change Month to a Categorical variable 
+  ggplot( ., aes(x = Ozone, y = Temp, color = Month)) + ##
+  geom_point(size = 4, alpha = .7) +
+  geom_smooth(method = lm, se = T, alpha = .2) + ## turn off error bars around the fit to see better
+  ggtitle(label = "Relationship between O3 and Temperature",
+          subtitle = "Linear Fit Through Data by Each Month") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic() ## use different theme to change plot appearance 
+```
+
+## Geometries and Subsetting
+-   using the geom_point() geometry we will lay down all points
+-   overwrite that geometry for a subset and change the aesthetics! 
+    -   both for points and for the smooth geometries
+
+```{r}
+airquality %>% 
+  ggplot( ., aes(x = Ozone, y = Temp, color = as.factor(Month))) +
+  geom_point() + ## This layer uses all data in these two fields
+  geom_point(
+    data = airquality %>%  filter(Month == 8),  ## For this layer, we pass the same dataset and filter it on the fly!
+    color = "red", size = 4, shape = 16) + ## And specify different formatting parameters 
+  geom_smooth(data = airquality %>% filter(Month == 8), alpha = .2) +  ## similarly for we pass geom_smooth() a subset of the data 
+  ggtitle(label = "Relationship between O3 and Temperature",
+          subtitle = "August Data Shown in Red and Fitted") +
+  xlab("Ozone (PPM)") +
+  ylab("Temperature(F)") +
+  theme_classic()
+             
+```
+
+
+## Barplots and GWAS Dataset
+
+##### We'll load the GWAS dataset and do some munging prior to graphing
+
+```{r}
+load("gwas.RData") 
+
+gwas %>% 
+  dplyr::filter(CHR_ID %in% as.character(1:22)) %>% ## keep only CHR in 1:22
+  mutate(CHR = as.numeric(CHR_ID)) %>% ## create a factor variable for our chromosomes 
+  mutate(Year  = as.factor(year(DATE))) %>% ## Create year from the Date field
+  group_by(Year) %>% ## group by Year
+  summarise(GWAS_Hits_Per_Year = n()) %>% ## Calculate rows of the dataset by year for these 1:22 Chromosomes
+  ggplot(data = ., aes(x = Year, y = GWAS_Hits_Per_Year/1000)) +  ## Create bar chart of the findings by year
+  geom_bar(position = "stack", stat = "identity", fill = "slateblue4") +
+  ggtitle(label = "Variants Published Per Year in GWAS Catalog",subtitle = "in 1000s") +
+  geom_text(aes(label=round(GWAS_Hits_Per_Year/1000,1)), position=position_dodge(width=0.9), vjust=-0.25) +
+  theme_classic()
+```
+
+### Note: We are able to do some calculations within ggplot syntax as seen by dividing the entries/year by 1000 in the aes() and geom_text() statements
+
+## using a function `cumsum()` to specify a special kind of aesthetic 
+
+```{r}
+gwas %>% 
+  dplyr::filter(CHR_ID %in% as.character(1:22)) %>% ## keep only CHR in 1:22
+  mutate(Year  = as.factor(year(DATE))) %>% ## Create year from the Date field
+  group_by(Year) %>% ## group by Year and Chromosome 
+  summarise(GWAS_Hits_Per_Year = n()) %>% 
+  ggplot(data = ., aes(x = Year, y = cumsum(GWAS_Hits_Per_Year))) +  ## Create cumulative summed bar chart through time
+    geom_bar(position = "stack", stat = "identity")  ## Stat = identity means use the data given to
+```
+
+## Is the Month that papers are puplished more likely to be end of year?
+
+```{r}
+gwas %>% 
+  dplyr::filter(CHR_ID %in% as.character(1:22)) %>% ## keep only CHR in 1:22
+  mutate(CHR = as.numeric(CHR_ID)) %>% ## create a factor variable for our chromosomes 
+  mutate(Month  = month(DATE)) %>% ## Create year from the Date field
+  group_by(Month) %>% ## group by Month
+  summarise(Pubs_by_Month = n_distinct(PUBMEDID)) %>% 
+  ggplot(data = ., aes(x = Month, y = Pubs_by_Month)) +  ## Create cumulative summed bar chart through time
+    geom_bar(position = "stack", stat = "identity")  +
+  ggtitle("Publications by month in the gwas catalog")
+```
+
+## Boxplots and Violin Plots
+
+-   These are meant to show the spread of the data across possible levels 
+-   We'll use the built in diamonds dataset 
+
+```{r}
+head(diamonds)
+```
+
+### How does the variance and spread of price vary by levels of clarity? 
+#### Violin plot with geom_violin() 
+```{r, fig.height = 1.5, fig.width=5, fig.align = "left"}
+diamonds %>% 
+  ggplot(aes(x = price, y = 1)) +
+  geom_violin() +
+  ggtitle("Dispersion of Price in the diamonds dataset")
+```
+
+#### Boxplot with geom_boxplot 
+
+```{r, fig.height = 1.5, fig.width=5, fig.align = "left"}
+diamonds %>% 
+  ggplot(aes(x = price)) +
+  geom_boxplot() +
+  ggtitle("Dispersion of Price in the diamonds dataset")
+```
+
+## Maybe that is not the whole picture?
+
+### What does it look like by clarity code
+
+```{r}
+diamonds %>% 
+  ggplot(aes(x = price, fill = clarity, y = clarity)) +
+  geom_violin() +
+  ggtitle("Dispersion of Price in the diamonds dataset\n by Clarity")
+```
+
+## What does it look like by color code
+
+```{r}
+diamonds %>% 
+  ggplot(aes(x = price, fill = color, y = color)) +
+  geom_violin() +
+  ggtitle("Dispersion of Price in the diamonds dataset\n by color of the diamond")
+```
+
+## Are outliers in price across color code related to the clarity
+
+-   use facet_wrap()
+-   since larger diamonds might tend to be biased to color/clarity, we'll subset diamonds to 0.9-1.1
+    carats
+
+```{r, fig.align="left", fig.height = 14, fig.width = 10}
+diamonds %>% 
+  dplyr::filter(carat > 0.90, carat < 1.1) %>% 
+  ggplot(aes(y = price, fill = color, x = color)) +
+  geom_violin() +
+  ggtitle("Dispersion of Price in the diamonds dataset\n by color and clarity for Diamonds between 0.9 and 1.1 carats") +
+  facet_wrap(color ~ clarity) -> test
+test
+```
+
+
+## These were the tinyest subset of possible graph types!
+
+-   We wanted to cover how ggplot2 specifies a plot, and builds up the layers with geometries
+-   We will cover some more plot types and visualizations in the second ggplot2 lecture
+-   In that lecture we will also cover formatting of axes labels, plot titles and multiple plots on the same page 
+
+#### Excellent resource for all kinds of plot types with the ggplot2 package: https://r-graph-gallery.com/ggplot2-package.html 
+
+#### Excellent resource for ALL KINDS of plots with and without ggplot2 - https://r-graph-gallery.com/ 
+
+
+## Plotting Part II! 
+
+-   Understand theme elements in `ggplot2`
+-   Arranging multiple plot objects using `ggpubr::ggarrange()`
+    - [Nice walkthrough](http://www.sthda.com/english/articles/24-ggpubr-publication-ready-plots/81-ggplot2-easy-way-to-mix-multiple-graphs-on-the-same-page/#:~:text=To%20arrange%20multiple%20ggplot2%20graphs,multiple%20ggplots%20on%20one%20page)
+-   Arranging multiple plots in ggplot - `facet_wrap()`   
+-   Introduction to `plotly` and interactive graphics from ggplot objects 
+
+## Large (Real) Gene Expression Dataset 
+
+```{r, fig.height = 3, fig.width = 5.5}
+load("gene_expression_data.Rdata")
+
+## Turn genes and treatments into factors
+combined_data %>% 
+  dplyr::mutate(gene = factor(gene), 
+                treatment = factor(treatment, levels = c("Treatment_1" , "Treatment_2" , "Treatment_3" , "Treatment_4" , "Treatment_5" , "Treatment_6" , "Treatment_7" , "Treatment_8" , "Treatment_9" , "Treatment_10" ,"Treatment_11"))) -> combined_data
+
+
+head(combined_data, 3) %>% 
+  kbl() %>%
+  kable_styling()
+
+summary(combined_data)
+length(unique(combined_data$gene))
+unique(combined_data$treatment)
+```
+
+## Data Munging
+
+#### How many differentially expressed genes with adjusted p.value < 0.10?
+
+```{r}
+combined_data %>% 
+  dplyr::filter(padj < 0.10) %>% 
+  group_by(treatment) %>% 
+  summarize(DEGs = n()) %>% 
+  kbl(caption = "Differentially Expressed Genes with FDR <= 10%") %>% 
+  kable_minimal(full_width= F)
+```
+
+#### What are the top 10 genes with FDR 10% or less across all 11 treatments??
+
+```{r}
+combined_data %>% 
+  dplyr::filter(padj < 0.10) %>% 
+  group_by(external_gene_name, description) %>% 
+  summarise(Treatments_with_Significance = n()) %>% 
+  arrange(desc(Treatments_with_Significance)) -> top_DEGs
+
+head(top_DEGs, 10) %>% 
+  kbl(caption = "Top 10 DEGs across Treatment Space") %>% 
+  kable_minimal(full_width= F)
+
+```
+
+## Create some individual graphs 
+
+#### For the top 6 genes, what do the log2fc values look like across treatments?
+#### Let's write a function! 
+-   Then we can call that function to create plots on the fly 
+
+```{r, fig.height = 3, fig.width = 4.5}
+
+jsh_l2fc_plot <- function(genetofilter = "Aaas", ## gene we want to graph
+                          color = "slateblue"){  ## color of the bars on our graph
+  combined_data %>% ## Take large dataset
+    dplyr::filter(external_gene_name == genetofilter) %>% ## filter to specified gene 
+    mutate(padj = formatC(padj, format = "e", digits = 2)) -> mydata ## Make a cleaner printed value of our adjusted pvalue 
+  
+  ## Get minimum l2fc for correct placement of text we'll use later in geom_label()
+  min_l2fc <- min(mydata$log2FoldChange)
+  
+  mydata %>% 
+    ggplot(aes(y = log2FoldChange, x = treatment)) + ## set aesthetics 
+    geom_bar(stat = "identity", fill = color, color = "black") + ## call a bar plot and tell it to use actual values instead of trying to "count" 
+    ylab("Log 2 Fold Change") + ## label Y axis
+    xlab("") + ## label X axis 
+    ylim(min_l2fc*1.6, max(1.1*mydata$log2FoldChange)) + ## Set limits based on the miniumum l2fc value
+    geom_text(aes(label = padj, y = 1.4*min_l2fc), size = 2) + ## Add text to our plot based on that minimum!
+    coord_flip() + ## Flip the graph to be horizontal bars
+    theme_bw() + ## clean theme
+    ### NOTICE WE CAN HAVE THE TITLE CHANGE BASED ON A PASSED PARAMETER!
+    ggtitle(paste0("Expression Change Across Treatments\nGene = ", genetofilter), subtitle = "Adjusted Pvalue is printed on left") -> p1 
+  return(p1)  ## return object from ggplot2
+}
+
+## Default Plot
+jsh_l2fc_plot()
+## Plot with different gene and color
+jsh_l2fc_plot(genetofilter = "Fbxw9", color = "orange")
+```
+
+## Calling our Function 
+-   Define a vector with our top 4 genes to graph 
+-   Calling our function for our first 4 genes 
+-   Storing those outputs from our function in a list 
+-   Using some nice colors from https://colorbrewer2.org/#type=diverging&scheme=PRGn&n=9 
+
+```{r, fig.height = 3, fig.width = 4.5}
+## Define a vector with our genes to call in our function 
+my_top10_genes <- top_DEGs %>% 
+  pull(external_gene_name) %>% ## Create Vector 
+  .[1:10] ## pull the first 10 items - the "." acts as the "input" from the previous operation in the piping %>% 
+my_top10_genes
+
+## lets create our colors from https://colorbrewer2.org/#type=diverging&scheme=PRGn&n=9
+mycolors <- c('#762a83','#9970ab','#c2a5cf','#e7d4e8','#fdb863','#d9f0d3','#a6dba0','#5aae61','#1b7837')
+
+mygraphs <- list()  ## create empty list to store our graphs into 
+
+for (i in seq_along(my_top10_genes)){
+  mygraphs[[i]] <- jsh_l2fc_plot(genetofilter = my_top10_genes[i], color = mycolors[i])
+}
+
+mygraphs[2]
+mygraphs[6]
+```
+
+## We can use the `ggpubr` package to arrange multiple plots
+
+```{r, fig.width = 7, fig.height = 5}
+library(ggpubr)
+ggarrange(plotlist = list(mygraphs[[1]], mygraphs[[2]], mygraphs[[3]], mygraphs[[4]]))
+```
+
+### The Titles Are Too Big For The Plot Area 
+
+## Customizing GGPlots with theme elements 
+
+#### We can use `theme` settings to customize many of the features of our plots 
+
+### [GGPLOT2_REFERENCE]("https://ggplot2.tidyverse.org/reference/theme.html")
+
+theme(
+  line, 
+  rect, 
+  text, 
+  title, 
+  aspect.ratio, 
+  axis.title, 
+  axis.title.x, 
+  axis.title.x.top, 
+  axis.title.x.bottom, 
+  axis.title.y, 
+  axis.title.y.left, 
+  axis.title.y.right, 
+  axis.text, 
+  axis.text.x, 
+  axis.text.x.top, 
+  axis.text.x.bottom, 
+  axis.text.y, 
+  axis.text.y.left, 
+  axis.text.y.right, 
+  axis.ticks, 
+  axis.ticks.x, 
+  axis.ticks.x.top, 
+  axis.ticks.x.bottom, 
+  axis.ticks.y, 
+  axis.ticks.y.left, 
+  axis.ticks.y.right, 
+  axis.ticks.length, 
+  axis.ticks.length.x, 
+  axis.ticks.length.x.top, 
+  axis.ticks.length.x.bottom, 
+  axis.ticks.length.y, 
+  axis.ticks.length.y.left, 
+  axis.ticks.length.y.right, 
+  axis.line, 
+  axis.line.x, 
+  axis.line.x.top, 
+  axis.line.x.bottom, 
+  axis.line.y, 
+  axis.line.y.left, 
+  axis.line.y.right, 
+  legend.background, 
+  legend.margin, 
+  legend.spacing, 
+  legend.spacing.x,  
+  legend.spacing.y, 
+  legend.key, 
+  legend.key.size, 
+  legend.key.height, 
+  legend.key.width, 
+  legend.text, 
+  legend.text.align, 
+  legend.title, 
+  legend.title.align, 
+  legend.position, 
+  legend.direction, 
+  legend.justification,   
+  legend.box, 
+  legend.box.just, 
+  legend.box.margin, 
+  legend.box.background, 
+  legend.box.spacing, 
+  panel.background, 
+  panel.border, 
+  panel.spacing, 
+  panel.spacing.x, 
+  panel.spacing.y, 
+  panel.grid, 
+  panel.grid.major, 
+  panel.grid.minor, 
+  panel.grid.major.x, 
+  panel.grid.major.y, 
+  panel.grid.minor.x, 
+  panel.grid.minor.y, 
+  panel.ontop, 
+  plot.background, 
+  plot.title, 
+  plot.title.position, 
+  plot.subtitle, 
+  plot.caption, 
+  plot.caption.position, 
+  plot.tag, 
+  plot.tag.position, 
+  plot.margin, 
+  strip.background, 
+  strip.background.x, 
+  strip.background.y, 
+  strip.clip, 
+  strip.placement, 
+  strip.text, 
+  strip.text.x, 
+  strip.text.x.bottom, 
+  strip.text.x.top, 
+  strip.text.y, 
+  strip.text.y.left, 
+  strip.text.y.right, 
+  strip.switch.pad.grid, 
+  strip.switch.pad.wrap 
+)
+
+
+## For titles, theme(plot.title = element_text(size = xx))
+
+```{r, fig.width = 7, fig.height = 5}
+mygraphs[[1]] <- mygraphs[[1]] + 
+  theme(plot.title = element_text(size = 9)) 
+
+ggarrange(plotlist = list(mygraphs[[1]], mygraphs[[2]], mygraphs[[3]], mygraphs[[4]]))
+
+for(i in seq_along(mygraphs)){
+  mygraphs[[i]] <- mygraphs[[i]] +
+    theme(plot.title = element_text(size = 9)) 
+}
+
+ggarrange(plotlist = list(mygraphs[[1]], mygraphs[[2]], mygraphs[[3]], mygraphs[[4]]))  
+```
+
+#### This still doesn't look great. We can either:
+-   Change some more theme elements 
+-   Change size of our plotting area 
+-   Change the layout of our plotting area 
+-   Change values on the 4 the plot to reduce size of the labels 
+
+## Change some more theme elements 
+-   axis label fonts and orientation 
+
+```{r, fig.width = 7, fig.height = 5}
+for(i in seq_along(mygraphs)){
+  mygraphs[[i]] <- mygraphs[[i]] +
+    theme(axis.text.y = element_text(angle = 45, size = 5))
+}
+
+ggarrange(plotlist = list(mygraphs[[6]], mygraphs[[7]], mygraphs[[8]], mygraphs[[9]]))  
+
+```
+
+## Change size of plotting Area
+
+```{r, fig.width = 8, fig.height = 7}
+# In the r coding chunk options   ```{r, fig.height = 7, fig.width=12}
+ggarrange(plotlist = list(mygraphs[[6]], mygraphs[[7]], mygraphs[[8]], mygraphs[[9]]))  
+```
+
+## Change Layout of Plotting Area (And size)
+
+```{r fig.height=9, fig.width = 4.5}
+## ```{r fig.height=9, fig.width = 6} 
+ggarrange(plotlist = list(mygraphs[[6]], mygraphs[[7]], mygraphs[[8]], mygraphs[[9]]),
+          ncol = 1)
+```
+
+## Shorten Treatment instead 
+- For this we'll modify the data 
+- And call our function and add to the plot each time with new label for X (really Y but graph is transposed)
+
+```{r, fig.width = 8.5, fig.height = 6}
+combined_data  %>% 
+  rowwise() %>% 
+  mutate(treatment = unlist(str_split(treatment, "_"))[2]) %>% 
+  mutate(treatment = factor(treatment)) %>% 
+  ungroup() -> combined_data
+
+for (i in seq_along(my_top10_genes)){
+  mygraphs[[i]] <- jsh_l2fc_plot(genetofilter = my_top10_genes[i], color = mycolors[i]) + xlab("Treatment")
+}
+
+ggarrange(plotlist = list(mygraphs[[6]], mygraphs[[7]], mygraphs[[8]], mygraphs[[9]]))
+
+```
+
+
+## Using facet_wrap() in ggplot2
+
+- Sometimes your data has a variable with multiple values (categorical) and you want to spread out a graph by the values of a variable 
+- Remember the Iris dataset 
+```{r}
+iris %>% ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point(size = 4) +
+  ggtitle("Sepal Width vs. Height in Iris Species") +
+  geom_smooth() +
+  theme_classic() +
+  theme(legend.position="bottom")
+```
+
+## Using facet_wrap() in ggplot2
+
+### Spreading across Species into Separate Plots
+
+```{r}
+iris %>% ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point(size = 4) +
+  ggtitle("Sepal Width vs. Height in Iris Species") +
+  geom_smooth() +
+  theme_classic() +
+  theme(legend.position="bottom") +
+  facet_wrap(~Species)
+```
+
+## Using facet_wrap() in ggplot2
+
+### Can have the plots stacked instead 
+
+```{r, fig.height = 8, fig.width=4}
+iris %>% ggplot(aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point(size = 4) +
+  ggtitle("Sepal Width vs. Height in Iris Species") +
+  geom_smooth() +
+  theme_classic() +
+  theme(legend.position="bottom") +
+  facet_wrap(~Species, ncol = 1)
+
+```
+
+## Using facet_wrap() in ggplot2
+
+### We can also arrange across two variables
+
+-   using the mpg dataset
+```{r}
+head(mpg,5) %>% kbl %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = F)
+
+mpg %>% 
+  ggplot(aes(x = cty, y = displ, color = manufacturer)) +
+  geom_point(size =3, alpha = .7) +
+  stat_smooth(method = "lm", ## linear model (linear regression)
+              formula = y ~ x, ## regression line based on the aes() values
+              se = F,
+              color = "darkorchid4") + ## Don't print error bands
+  ggtitle("Relationship Between Displacement and City MPG\nin the mpg Dataset") +
+  xlab("City Miles Per Gallon") +
+  ylab("Engine Displacement in Liters") +
+  theme_dark() -> myplot
+myplot  
+```
+
+
+## Arranging across two variables
+
+-   using the mpg dataset
+```{r, fig.height = 6, fig.width = 7}
+mpg %>% 
+  mutate(drive_train = case_when(drv == "4" ~ "4WD", ## Use case_when from dplyr package to create new variable based on levels of drv
+                                 drv == "f" ~ "FWD",
+                                 drv == "r" ~ "RWD")) %>% 
+  mutate(drive_train = factor(drive_train, levels = c("FWD","RWD","4WD")))  %>% ## Factor that new variable and set factor order!
+  ggplot(aes(x = cty, y = displ, color = manufacturer)) +
+  geom_point(size =3, alpha = .7) +
+  stat_smooth(method = "lm", ## linear model (linear regression)
+              formula = y ~ x, ## regression line based on the aes() values
+              se = F,
+              color = "darkorchid4") + ## Don't print error bands
+  ggtitle("Relationship Between Displacement and City MPG\nBy Cylinder Number and Drive Train Type") +
+  xlab("City Miles Per Gallon") +
+  ylab("Engine Displacement in Liters") +
+  facet_grid(cyl~drive_train) +
+  theme_dark() -> myplot2
+myplot2
+  
+  
+```
+
+## Plotly! 
+
+-   using the plotly package 
+-   first install on your computer with `install.packages("plotly")`
+
+#### Plotly allows the creation of interactive graphics and uses ggplot objects!
+
+## Plotly 
+
+```{r, message=FALSE, fig.height = 8.8, fig.width = 8, warning =F}
+library(plotly) ## Load our library
+
+mpg %>% 
+  mutate(mylabel = paste0(year,":",manufacturer,":",model)) %>% 
+  ggplot(aes(x = cty, y = displ, color = manufacturer, label = mylabel)) +
+  geom_point(size = 3, alpha = .7) +
+  stat_smooth(method = "lm", ## linear model (linear regression)
+              formula = y ~ x, ## regression line based on the aes() values
+              se = F, ## Don't print error bands
+              color = "darkorchid4") + 
+  ggtitle("Relationship Between Displacement and City MPG in the mpg Dataset") +
+  xlab("City Miles Per Gallon") +
+  ylab("Engine Displacement in Liters") +
+  theme_dark() -> myplot
+ggplotly(myplot)  
+```
+
+
+
