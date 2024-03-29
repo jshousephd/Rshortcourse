@@ -1,0 +1,600 @@
+---
+title: "Functions & Strings "
+author: "John House PhD"
+date: "March 30th 2024"
+output:
+  slidy_presentation:
+    df_print: kable
+    font_adjustment: -2
+    footer: "Introduction to Functions and Strings"
+---
+ 
+ 
+```{r setup, message=F, warning=F, echo = F}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+library(tidyverse)
+library(kableExtra)
+library(data.table)
+```
+
+
+## Functions !
+
+##### Explaining the concept of a function in R to someone with no coding experience can be likened to describing a recipe in a cookbook. A recipe in a cookbook is a set of instructions to make a specific dish. Similarly, a function in R is a set of instructions that performs a specific task. Here’s how this analogy extends to understanding functions:
+
+-   Name of the Recipe (Function Name): Just like a recipe has a name, a function in R has a name too. This name is used to call or use the function. For example, if you have a function named calculate_average, you use this name to tell R to perform the task defined in this function.
+
+-   Ingredients (Arguments or Parameters): In a recipe, you have ingredients; in a function, you have arguments or parameters. These are pieces of information or data you give to the function so it can perform its task. For example, if your function is to calculate an average, you need to give it numbers to calculate the average of.
+
+-   Instructions (Function Body): The steps you follow in a recipe are like the instructions inside a function, called the function body. This is where the actual processing happens. In R, this is written in R’s programming language and defines what the function does with the inputs (arguments).
+
+-   The Dish (Return Value): Just as following a recipe results in a dish, a function usually gives back a result, known as the return value. After processing the inputs, the function returns this value as its output.
+
+-   Reusability: Just like you can use a recipe to make a dish multiple times, a function can be used repeatedly across different parts of your program.
+
+## Simple Function - Get mean of two numbers
+
+```{r}
+# Function to add two numbers
+jsh_mean_2numbers <- function(number1, number2) {
+    mean <- (number1 + number2)/2
+    return(mean)
+}
+
+# Use the function
+result <- jsh_mean_2numbers(5, 3)
+print(result)
+```
+
+## Intermediate function - Mean of vector of numbers 
+
+```{r}
+jsh_mean <- function(x) {
+  mymean <- sum(x)/length(x)
+  return(mymean)
+}
+
+xnum <- c(4,5,6,7)
+xchar <- c("A", "B" , "C")
+
+jsh_mean(xnum)
+try(jsh_mean(xchar))
+
+```
+
+
+#### Return values
+
+#### While a function can only return 1 value, that one value can be a list of lots of things, or a dataframe of values as seen in previous classes
+
+## Special Built-in R functions 
+-   apply() - for working on rows or columns of dataframes 
+-   lapply() - for working on elements of a list 
+-   sapply() - for working on elements of a vector 
+-   mapply() - "multiple apply" - will not cover
+
+```{r message = F}
+## Special function here - 
+
+mylist <- list(mtcars, diamonds, cars, iris)
+names(mylist) <- c("mtcars","diamonds", "cars", "iris")
+
+lapply(mylist, ## list item to perform function on each list element
+       function(x) head(x,3)) ## define a function on the fly to perform based on a parameter (in our case - "x")
+```
+
+## lapply() in more detail
+
+#### lapply is a powerful and commonly used function in R, part of the family of "apply" functions. These functions are designed for efficient iterations over elements of vectors, lists, and other collections. 
+ 
+#### lapply stands for 'list apply'. It applies a function to each element of a list or vector and returns a list of the same length as the input. Each element of the returned list contains the result of applying the function to the corresponding element of the input.
+
+#### Syntax:  lapply(X, FUN, ...)
+-   Where X is a list or vector, FUN is the function to apply, and ... represents additional arguments to FUN.
+
+-   Uses of lapply
+      -   Consistent Output: The output of lapply is always a list, which makes it predictable and easy to work with, especially when the output sizes are unknown or vary
+
+-   Flexibility: It can apply virtually any function, including built-in R functions, user-defined functions, and anonymous (inline) functions
+
+-   Vectorization: lapply is vectorized, meaning it can operate on each element of a vector or list simultaneously. This is typically faster and more efficient than writing an explicit loop
+
+-   Avoiding Loops: lapply is often used in place of for-loops for operations on lists and vectors, leading to cleaner and more readable code
+
+## lapply example 
+
+#### Let's consider an example where you have a list of numeric vectors, and you want to calculate the mean of each vector.
+```{r}
+data_list <- list(
+  first = c(1, 2, 3),
+  second = c(4, 5, 6, 7),
+  third = c(10, 11)
+)
+data_list
+
+lapply(data_list, ## input to function must be a list
+                    function(x) {mean(x, rm.na = T)}) ## explicitly specify a function based on `x` where x is each element of the list
+
+## Simple built-in functions can be less explicit
+lapply(data_list, mean)
+lapply(data_list, min)
+lapply(data_list, max)
+
+
+
+```
+
+
+## We can also write our own more complicated function and call it with lapply()
+
+```{r}
+data_list
+mysummary <- function(x){
+  return(data.frame(
+                    min=min(x),
+                    mean=mean(x),
+                    max=max(x)))
+}
+lapply(data_list, mysummary)
+```
+
+
+## lapply will work over the columns of a dataframe as well 
+
+```{r}
+## identify the class of each column in the diamonds dataset
+lapply(diamonds, function(x){class(x)})
+
+str(mtcars)
+## return the mean to eech column of the mtcars dataset
+lapply(mtcars, mean)
+## Same thing, but explicit
+lapply(mtcars, function(x) {mean(x)})
+## A more complicated function
+lapply(mtcars, function(x) {x/mean(x)})
+
+```
+
+## apply() and a dataframe
+
+```{r}
+head(mtcars)
+apply(X = mtcars, ## specify object 
+      MARGIN = 1, ## 1 means work on each row, 2 means work on each column
+      function(x) {sum(x)}) ## specify what to do on each row (or column)
+
+
+```
+
+## Writing our version of summary() 
+
+```{r}
+summary(mtcars$mpg)
+```
+
+## Writing our version of summary() 
+
+```{r}
+jsh_summary <- function(vec) {
+  return(list(Min = min(vec), 
+              FirstQ = quantile(vec, 0.25),
+              Median = median(vec),
+              Mean = mean(vec),
+              ThirdQ = quantile(vec, 0.75),
+              Max = max(vec)))
+}
+
+jsh_summary(mtcars$mpg)
+
+## Built in Summary 
+summary(mtcars$mpg)
+
+## Use my summary function with lapply over the mpg columns 
+
+lapply(mtcars, function(x) {jsh_summary(x)})
+```
+
+## sapply() - simplified apply 
+
+#### sapply() can be given a vector as input, or lists and tries to return simplified output
+
+#### Some functions are already implicitly vectorized 
+-   meaning the function call is applied to each element 
+
+```{r}
+x <- 1:10
+
+x*4
+x/3
+
+x/mean(x)
+
+paste0(x,"hi")
+```
+
+## sapply() - iterating over a vector 
+
+#### But you can also write your own explicity 
+
+```{r}
+sapply(1:10, function(x) x^2)
+
+sapply(paste("A",LETTERS[1:10]), 
+       function(x) unlist(str_split(x, " ")))
+```
+
+
+## More Sophisticated Function 
+
+#### Create a dataset for Regression 
+```{r}
+set.seed(12345)  
+N = 1000 ## define number of subjects 
+M = 5000 ## define number of predictor SNPS
+## Define Snp Matrix ##
+mysnps = matrix(rnorm(N*M,mean=0,sd=1), N, M)
+names(mysnps) <- paste0("rs",1:M)
+colnames(mysnps) <- paste0("snp",(1:ncol(mysnps)))
+rownames(mysnps) <- paste0("maskid", (1:nrow(mysnps)))
+mysnps[1:6,1:6] %>% head
+
+# Define Covariate Matrix #
+mycovars = matrix(rnorm(N*2, mean = 0, sd = 1), N, 2)
+colnames(mycovars) <- paste0("Covariate", (1:ncol(mycovars)))
+rownames(mycovars) <- paste0("maskid", (1:nrow(mycovars)))
+head(mycovars) 
+
+## define Outcome Vector 
+myOC = rnorm(N,0,1)
+head(myOC)
+
+# for Logistic - about 25% cases
+# myOC = sample(c(0,0,0,1), size = 3033, replace = T)
+# head(myOC) %>% kable("pandoc")
+```
+
+## Regression Function 
+
+```{r}
+jsh_reg_simple <-
+  function(snp_column = 1,
+           y = myOC,
+           snps = mysnps,
+           covars = mycovars,
+           logR = F) {
+             
+    if (logR == F) {
+      mylm <-
+        as.list(coef(summary(lm(
+          y ~ snps[, snp_column] + covars[, 1] + covars[, 2]
+        )))[2,])
+      
+    } else {
+      mylogit <- glm(y ~ snps[, snp_column] + covars[, 1] + covars[, 2], family = binomial(link = "logit"))
+      mylm <- as.list(coef(summary(mylogit))[2, ])
+    }
+    
+    return(mylm)
+  }
+jsh_reg_simple(logR = F)
+
+simplified <- list()
+
+ptm <- proc.time() ## start recording current time
+for (i in seq_along(1:ncol(mysnps))) {
+  simplified[[i]] <- jsh_reg_simple(snp_column = i, logR = F)
+}
+proc.time() - ptm ## substract start time from current time
+```
+
+#### It took ~ 6 seconds for my computer to calculate 5000 regressions on 1000 individuals 
+
+## Using rbindlist to simplify our output to a dataframe and interrogate
+
+```{r}
+rbindlist(simplified) %>% 
+  mutate(Variant = colnames(mysnps)) %>% 
+  dplyr::select(Variant, everything()) -> mydf
+
+head(mydf, 10) %>% 
+  kbl() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+##What percent of the pvalues are < 0.05?
+sum(mydf$`Pr(>|t|)` < 0.05)/nrow(mydf)
+```
+
+#### We can see that ~ 5% of the regressions were significant 
+
+#### After correcting for false discovery the number is close to zero!
+
+```{r}
+sum(p.adjust(mydf$`Pr(>|t|)`, method = "BH") < 0.05)
+```
+
+
+
+## Strings 
+
+#### stringr package 
+
+-   part of the tidyverse, so loaded when you use a `library(tidyverse)` statement 
+-   the functions are pretty intuitive and all start with `str_` 
+-   <a href="https://stringr.tidyverse.org/" target="_blank">Stringr Vignette</a> including cheat sheet for `stringr` functions and for regular expressions (regex)
+
+```{r}
+mystring <- "This is the BEST string! The absolute BEST"
+mystring
+
+## We can get the length of a string using str_length()
+str_length(mystring)
+```
+
+## We can get the position of a the first time something occurs with `str_locate()` and all occurances with `str_locate_all()`
+
+```{r}
+mystring
+str_locate(string = mystring, pattern = "the")
+
+## We can use str_locate_all() to return all occurences
+mystring
+str_locate_all(string = mystring, pattern = "the")
+str_locate_all(string = mystring, pattern = "BEST")
+```
+
+
+#### Why didn't it return both positions of "the" when we used? 
+
+## Pulling out a string based on position can be done with  `str_sub()`
+
+-   we need to give it start and end 
+
+```{r}
+mystring
+str_sub(string = mystring, start = 1, end = 15)
+
+## Or based on the location of part of the string 
+mystring
+str_sub(string = mystring, 
+        start = 1,
+        end = str_locate(mystring, "!")[1])
+```
+
+## Replacing values within a string can be done with `str_replace()` and `str_replace_all()`
+
+```{r}
+mystring
+
+str_replace(string = mystring, 
+            pattern = "BEST", 
+            replacement = "mediocre")
+
+str_replace_all(string = mystring, 
+            pattern = "BEST", 
+            replacement = "mediocre")
+
+```
+
+## Using a Unix tool - `grep()` in R
+
+#### Create a sample Data-Frame
+
+```{r}
+# Create vectors for each column
+IDs <- c(1, 2, 3, 4, 5)
+Names <- c("Alice Smith", "Bob Johnson", "Charlie Brown", "Diana Green", "Edward White")
+Emails <- c("alice@example.com", "bob@example.com", "charlie@example.com", "diana@example.com", "edward@example.com")
+Comments <- c("First visit, very impressed!", "Good service, will come again.", "Satisfied customer.", "Loved the ambiance, staff friendly.", "Excellent experience, great service")
+Additional_Info <- c("Age: 28, City: New York", "Age: 35, City: Los Angeles", "Age: 40, City: Chicago", "Age: 32, City: Houston", "Age: 45, City: Phoenix")
+
+
+# Combine into a DataFrame
+data <- data.frame(IDs, Names, Emails, Comments, Additional_Info)
+
+# Print the DataFrame
+data
+```
+
+## Search for what line(s) has the string "edward"
+
+```{r}
+data
+grep("edward", ignore.case = TRUE, x = data$Names)
+```
+
+#### How about the term "service" in Comments 
+
+```{r}
+
+grep("service", ignore.case = TRUE, x = data$Comments)
+
+```
+
+## Filtering a Column based on String Information 
+
+#### Say we want to filter the rows of our dataset based on `Additional_Info` having either "Houston" or "Los Angeles" 
+
+##### We can use `grepl()` ( or `str_detect()`)
+
+```{r}
+data
+data %>% 
+  dplyr::filter(grepl(x = Additional_Info, ## specify the column to look for expression
+                      pattern = "Houston|Los Angeles", ## In grep and regex processing, the "|" is a "or"
+                      ignore.case = FALSE))
+```
+
+## Using paste() and paste0 to create strings 
+
+#### paste() adds in a default space between the objects for you, but can be changed 
+
+```{r}
+
+paste("John","has","bad","breath.")
+paste("John","has","bad","breath.", sep = "_")
+
+## Or for regression expression 
+
+paste0("type_2_diabetes ~ ", 
+       paste0(c("sex","age","bmi","variant"), 
+              collapse = " + "))
+
+```
+
+#### paste0() does not add in a delimiter for you 
+
+```{r}
+paste0("John","has","bad","breath.")
+```
+
+#### paste() is also vectorized and will auto fill 
+
+```{r}
+paste(1:12, c("Bob","Mary","Sue"), "is great")
+```
+
+
+
+## Strings are often parsed 
+
+#### Separating Strings - First With `tidyr::separate()`
+
+##### We want to create two columns with first and last name from the first column
+
+```{r}
+data
+data %>% separate(col = Names, ## specify which column to split 
+                  into = c("First_Name", "Last_Name"), ## Specify Names of new columns  
+                  sep = " ", ## What is the string to separate on, in our case it is a space
+                  remove = TRUE) %>%  ## If FALSE -> would keep the original variable 
+  kbl() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"), position = "left")
+
+```
+
+## Strings are often parsed 
+
+#### Separating Strings - More complicated- More flexible - stringr::str_split()
+
+
+```{r}
+data
+mystring <- data[1,5]
+mystring
+
+## Using str_split to get city 
+str_split(string = mystring,
+          pattern = ", City: ")
+
+```
+#### So this gave us a list with two pieces, the before and the after of our string 
+#### We can use unlist to get a vector of the items 
+
+```{r}
+unlist(str_split(string = mystring,
+          pattern = ", City: "))
+```
+#### We can then specify the second element of that vector 
+
+```{r}
+unlist(str_split(string = mystring,
+          pattern = ", City: "))[2]
+```
+
+## Using this information in tidyverse 
+
+```{r}
+data %>% 
+  mutate(City = unlist(str_split(string = Additional_Info,
+          pattern = ", City: "))[2])
+```
+
+#### What happened? Why didn't it parse each row?
+
+## Using this information in tidyverse 
+#### We can specify to do operation by row with `rowwise()`
+
+```{r}
+data %>% rowwise() %>% ## We need to tell tidyverse to specifically calculate by row 
+  mutate(City = unlist(str_split(string = Additional_Info,
+          pattern = ", City: "))[2])
+
+```
+
+####  A nice comparison of base R functions and their stringr counterparts  <a href="https://stringr.tidyverse.org/articles/from-base.html" target="_blank">Can Be Found Here</a> 
+
+
+## Shifting Gears 
+
+#### Often our data is presented in a very condensed format to save space specific information is in the names of fields or the names of files or even the directory struture of files 
+
+```{r warning = FALSE}
+## make a few random directories in current directory
+dir.create("species.bear.dna")
+dir.create("species.bear.rna")
+dir.create("species.bear.protein")
+dir.create("species.wolf.dna")
+dir.create("species.wolf.rna")
+dir.create("species.wolf.protein")
+dir.create("species.bear.dna/input")
+dir.create("species.bear.rna/input")
+dir.create("species.bear.protein/input")
+dir.create("species.wolf.dna/input")
+dir.create("species.wolf.rna/input")
+dir.create("species.wolf.protein/input")
+
+
+my_dirs <- list.dirs(path = ".", full.names = TRUE)[-1]
+my_dirs
+## which directories have "input" in the name 
+my_idx <- grep(my_dirs, pattern = "input")
+my_dirs[my_idx]
+
+## Create a file in each folder named the same thing
+for(i in my_idx){
+  ## create simple dataframe
+  mydf <- data.frame(Gene_id = paste0("Gene",1:10),
+                     Exp1_data = round(100*rnorm(10),0),
+                     Exp2_data = round(100*rnorm(10),0),
+                     Exp3_data = round(100*rnorm(10),0))
+  write_csv(mydf, file = paste0(my_dirs[i], "/data.csv"))
+  if(i == 2){print(mydf) %>% kbl()}
+}
+
+```
+
+## Use Case - Strings 
+
+#### We want to read in each file of "data.csv" from each directory and parse directory of the file to do so
+
+- Remember our working directory is where our script is 
+- We can actually search for files with list.files()
+
+```{r}
+getwd() 
+
+files_to_collect <- list.files(path = ".", ## search in current directory
+                               pattern = "data.csv", ## for files with data.csv in the name
+                               recursive = T) ## and search within downstream folders from this location
+files_to_collect
+```
+
+#### So these are the files we want to collect 
+
+```{r}
+library(data.table)
+
+datalist <- list() ## Create empty list to store data
+for (i in seq_along(files_to_collect)){
+  datalist[[i]] <- fread(files_to_collect[i]) ## add data to emptylist
+  names(datalist)[i] <- files_to_collect[i] ## add name to list
+}
+
+datalist
+rbindlist(datalist, idcol = "dataset") %>% 
+  kbl %>% 
+  kable_minimal()
+```
+
+
+
+
