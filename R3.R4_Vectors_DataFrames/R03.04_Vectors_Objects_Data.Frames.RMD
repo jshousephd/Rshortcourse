@@ -1,0 +1,516 @@
+---
+title: "Data Structures in R"
+author: "John House PHD"
+date: "March 30th 2024"
+output:
+  slidy_presentation:
+    font_adjustment: -1
+    footer: "Fundamentals of R and Posit (R Studio) - Data Structures"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+## Data Structures in R  
+
+In R, data types play a crucial role in data manipulation and analysis. Understanding these data types and how to use them is fundamental to becoming proficient in R programming. In this lecture, we'll explore the most common data types in R and demonstrate how to work with them.
+
+#### 6 Major basic Data Structures in R 
+- Numeric: (real or decimal) **15, 11.7**
+- Integer: **13L** The "L" is an explicit designation to tell R to store as integer
+- Character:  **hi , exp1**
+- Logical: **TRUE, FALSE**
+- Complex: **1+4i** (complex numbers with real and imaginary parts)
+- Raw: (Uncommon - holds bytes)
+
+## Data Structure Examples
+
+#### Remember that the `<-` is an assignment operator 
+#### **`ObjectName <- 'value'`**
+
+```{r}
+## Creating numeric variables
+x <- 5
+x
+y <- 3.14
+y
+z <- c(1:10)
+z
+```
+
+## Data Structure Examples
+
+#### In R, everything preceeded by parentheses is almost always a function call 
+
+```{r}
+## Creating integer variables
+age <- as.integer(30)
+```
+
+```{r}
+## Creating character variables
+name <- "John"
+city <- 'New York'
+```
+
+```{r}
+## Creating logical variables
+is_student <- TRUE
+has_degree <- FALSE
+```
+
+## Interrogation of R Data Types and Objects
+R provides many functions to examine features of vectors and other objects, for example
+
+- class() - what kind of object is it (high-level)?
+- typeof() - what is the object’s data type (low-level)?
+- length() - how long is it? What about two dimensional objects?
+    -   dim() for two dimensional (rows, then columns )
+- attributes() - does it have any metadata?
+
+## Interrogation of R Data Types and Objects
+#### mtcars dataset in R
+
+```{r}
+class(mtcars)
+typeof(mtcars)
+length(mtcars)
+dim(mtcars)
+attributes(mtcars)
+```
+
+
+## Data Structures 
+R has multiple **data structures** including 
+
+- atomic vector
+- list
+- matrix
+- data frame
+- factors
+
+## Vectors 
+
+A collection of elements. Can be **character, logical, integer, or numeric** 
+
+```{r}
+##Integer
+int.vec <- as.integer(c(1:10))
+int.vec
+class(int.vec)
+##Numeric
+num.vec <- as.numeric(int.vec)
+num.vec
+class(num.vec)
+##Character
+chr.vec <- as.character(int.vec)
+chr.vec
+class(chr.vec)
+```
+
+## R - Vectorized Language 
+
+##### R is often referred to as a vectorized language because it allows operations to be performed on entire vectors of data without the explicit need for looping over each element. This feature leads to more concise and readable code, as well as improved performance due to internal optimization of vector operations. Below are some examples illustrating how R's vectorized operations work.
+
+#### Example 1 - Arithmetic operations on Vectors
+
+```{r}
+vector1 <- c(1, 2, 3, 4)
+vector2 <- c(5, 6, 7, 8)
+
+## Add two Vectors
+result <- vector1 + vector2
+result
+
+## multiply two vectors 
+vector1*vector2
+```
+
+#### Example 2 - Strings 
+
+```{r}
+column_number <- c(1:10)
+column_number
+LETTERS
+
+paste0(column_number, LETTERS)
+
+```
+
+#### What happened?
+
+## Vector Type Logical 
+Logicals are a little special
+
+```{r}
+##Logical
+log.vec <- c(rep(TRUE,5),rep(FALSE,5))
+log.vec
+class(log.vec)
+```
+
+While they print as **TRUE, FALSE** R evaluates them as 
+
+- TRUE = **1** 
+- FALSE = **0**
+
+```{r}
+sum(log.vec)
+```
+
+## Logicals Continued 
+
+This becomes extremely useful and important when we think about subsetting and filtered data objects in R
+
+```{r}
+## Create a vector of 1000 numbers
+myvec <- rnorm(1000, 500, 50)
+summary(myvec)
+```
+
+#### How many of the 1000 numbers are < 500 
+
+```{r}
+lessthan500 <- myvec<500
+head(lessthan500, 10)
+data.frame(mynums = myvec[1:10], lessthan500 = lessthan500[1:10])
+
+class(lessthan500)
+head(lessthan500)
+sum(lessthan500)
+```
+
+#### What percentage? 
+```{r}
+sum(lessthan500)/length(lessthan500)
+```
+
+## Working with Vectors 
+
+
+#### Adding Elements to a vector 
+
+```{r}
+## using the concatenate operator c()
+myvec <- c(round(rnorm(10,100,15),1))
+myvec
+class(myvec)
+myvec <- c("Hi Jane", myvec)
+myvec
+class(myvec)
+```
+
+#### Sequence of Numbers 
+
+```{r}
+seq(10)
+seq(1, 10, by = .5)
+
+```
+
+## Working with Vectors - Part II
+
+#### Missing Data 
+R supports missing data in vectors. They are represented as NA (Not Available) and can be used for all the vector types covered in this lesson
+
+- x <- c(NA, NA, 0.7)
+- x <- c(TRUE, TRUE, NA)
+- x <- c("z", NA, "b", "d", "f")
+- x <- c(NA, 1-3i, NA)
+
+##### **is.na()** will evaluate a vector and return logical 
+
+```{r}
+x <- c("z", NA, "b", "d", NA)
+is.na(x)
+## Are any NA in the vector
+anyNA(x)
+```
+
+
+## Subsetting Vectors
+
+The `[ ]` notation is a base R function for subsetting an R object 
+
+```{r}
+
+myvec
+## first 3 elements
+myvec[1:3]
+## first, fifth and seventh elements
+myvec[c(1,5,7)]
+```
+
+## Matrices 
+
+#### Specialized 2 dimensional object 
+
+#### Key points  
+
+- Like data.frames (next), matrices are 2 dimensional  and consist of rows and columns 
+- **However: Matrices have to contain the same data type** 
+  - all numeric 
+  - all interger 
+  - all logical 
+  - all character 
+-   This also means that rownames and colnames have to describe the matrix, and by definition, rownames have to be unique 
+
+
+  
+```{r}
+x <- 1:4
+y <- 12:15
+cbind(x,y)
+### NOTE THE ROW Names
+rbind(x,y)
+dim(cbind(x,y))
+class(cbind(x,y))
+```
+
+## You can fill a matrix from a vector
+
+```{r}
+### You can also fill a matrix 
+x <- round(rnorm(100),1)
+head(x,20)
+```
+
+#### Note: Matrix is filled by column unless specified as by row
+#### Note: warning because we had more data in `x` than our matrix specification
+
+```{r}
+mymatrix <- matrix(x,nrow = 5, ncol = 5)
+mymatrix
+
+```
+
+## Matrix attributes and Subsetting 
+
+- Add in rownames and colnames 
+  - 
+
+```{r}
+rownames(mymatrix) <- LETTERS[1:nrow(mymatrix)]
+colnames(mymatrix) <- paste0("Variable", 1:ncol(mymatrix))
+mymatrix
+
+dim(mymatrix)
+class(mymatrix)
+attributes(mymatrix)
+```
+
+## For Subsetting we still can use the `mymatrix[row,column]` syntax 
+
+```{r}
+mymatrix
+## Pull one value 
+## Pull a subset out of the middle
+mymatrix[3:5, 1:2]
+## Pull entire row 
+mymatrix[2, ]
+## Pull entire column 
+mymatrix[ , 2]
+
+## What is the Mean of the 3rd column
+mean(mymatrix[ , 3])
+## How about each col?
+colMeans(mymatrix)
+
+```
+
+## **Data Frames and Lists**
+
+Data frames and lists may contain many different types (classes) of data, whereas vectors and matrices are `atomic`, meaning that they can have only one "class" of data. Data frames and lists may be constructed by recombining one or more matrices, vectors, data frames, or lists.  
+
+#### **Data Frames**
+
+A data frame is a two dimensional object with named columns. **Columns in a data frame do not need to be the same type of variable class.** Data frames can be constructed by recombining one or more `matrices`, `vectors`, or `data frames`.  
+
+Variable/object class **always** matters. R functions behave differently based upon the interpreted class of the data you pass them. Check your output to be sure class() is interpreted as intended: Just because your code runs does not mean that it is valid!  
+
+```{r}
+## Convert the atomic matrix into a data frame. 
+mymatrix.df <- data.frame(mymatrix) #data.frame() function specifies that we want to convert it to data frame
+  ## What do our data look like now?
+  ## NOTE: data.frame() assigns default column names if they are not present"
+  head(mymatrix.df) 
+  ## Calculate mean of column Variable3
+  mean(mymatrix.df$Variable3)
+  ## Calculate all row means
+  rowMeans(mymatrix.df)
+```
+
+## There are other data frame examples available in R. 
+
+We use `data()` to view data sets in the basic `datasets` packages. Downloaded/add-on packages may include purpose-specific data sets.  
+
+```{r}
+## Load the 'datasets' package (contains example datasets)
+library(datasets)
+
+## What datasets are available? 
+dfs <-data() # This will open a new window displaying available datasets. 
+```
+
+We'll use the *mtcars* dataset
+
+```{r}
+## What are the properties or attributes of this dataset?
+## there are 32 rows and 11 columns 
+dim(mtcars)
+## Look at first 6 rows
+head(mtcars)
+rownames(mtcars)
+names(mtcars)
+colnames(mtcars)
+```
+
+Notice that the `names()` of a data frame default to column names. Here, we use `==` to test elements of two equally sized vectors for equality. The `all()` function then asks if all elements of the resulting logical vector are `TRUE`.  
+
+```{r}
+## Are the names() the same as the colnames?
+all(names(mtcars) == colnames(mtcars))
+```
+
+## **Selecting Data Slices**
+
+There are many ways to select data slices, and the choice affects output, which affects what you can use that output to do. 
+
+```{r, error = T}
+## Can I access the columns of a data frame by name? 
+## The `dataframe$colname` syntax pulls a vector
+mtcars$hp
+## the subset notation creates a subsetted dataframe
+class(mtcars['hp'])
+
+## This uses an evaluation to pull the column 
+colnames(mtcars) == "hp"
+mtcars[colnames(mtcars) == "hp"]
+
+## We can also access the column by column number. 
+mtcars[ ,4]
+
+## Or a row by Row Name 
+mtcars["Toyota Corolla", ]
+
+
+```
+
+## Subsetting Based on Column evaluation 
+
+#### Subset all cars in the set with 8 cylinders
+
+```{r}
+head(mtcars,2)
+
+## evaluation vector
+mtcars$cyl == 8
+
+## Subset rows based on that!
+mtcars[mtcars$cyl == 8, ]
+
+## Subset all with MPG > 25 
+
+mtcars[mtcars$mpg > 25,]
+```
+
+## We can also use `grep()` to match patterns. 
+
+```{r}
+## Which rownames of mtcars contain the term 'Toyota'
+grep("Toyota", rownames(mtcars))
+## What are the rownames of mtcars that contain the term 'Toyota'
+grep("Toyota", rownames(mtcars), val = T)
+
+## We can use results from either to show the corresponding row values. 
+## Select multiple rows matching pattern using row numbers. 
+mtcars[grep("Toyota", rownames(mtcars)), ]
+
+## Select multiple rows matching pattern using row names. 
+mtcars[grep("Toyota", rownames(mtcars), val = T), ]
+```
+
+
+## Lists 
+
+#### Lists are great - The elements of a list can be `ANY` data class! 
+
+
+```{r, error = T}
+## Create lists using list(). 
+legs <- list(four = c("dog", "cat", "horse"),
+             two = c("human", "kangaroo"),
+             favorite_number = 42)
+## The list contains 3 objects. One named 'four' and one named 'two' and one named 'favorite_number'. 
+legs
+
+## To access the objects within a list, use double brackets. 
+legs[[2]]
+
+## We can also access values from within the list objects by using a second set of brackets. 
+legs[[1]][2]
+```
+
+## Helpful function **with()**
+
+```{r, error = T}
+## with() allows you to apply functions to an object with implicit colnames usage
+with(mtcars, hist(mpg))
+```
+
+## Helpful function **by()**
+
+```{r, error = T}
+## by() lets you perform functions on factor levels. 
+## Let's look at the iris dataset. 
+head(iris)
+
+## The species column is a factor
+class(iris$Species)
+
+## Calculate the mean petal width for each species
+by(iris, iris$Species, function(x) mean(x$Petal.Width))
+```
+
+## Combining Matrices and Vectors with **cbind()** or **rbind()** 
+
+```{r, error = T}
+## cbind() and rbind() will bind matrices or vectors. The result is an atomic matrix. 
+## First create a matrix
+nums <- matrix(rep(1:10, 10), nrow = 10)
+## What does our matrix look like? 
+nums
+## What are the dimensions? 
+dim(nums)
+
+## Make a new row. 
+eleven <- rep(11, 10)
+## Add a new row to nums. 
+rbind(nums, eleven)
+
+## Make a new column. 
+nums_11 <- 10:1
+## Add a new column to nums
+cbind(nums, nums_11)
+
+```
+
+
+## **Quick summary of useful functions**
+
+ - head() : shows first few rows (n = 6 by default)
+ - tail() : shows last few rows  (n = 6 by default)
+ - dim() : returns the dimensions of data frame (i.e. number of rows and number of columns)
+ - nrow() : number of rows
+ - ncol() : number of columns
+ - str() : structure of data frame - name, type and preview of data in each column
+ - names() or colnames() : both show the names attribute for a data frame
+ - class() : returns data type of object 
+
+
+
+
+
+
+
